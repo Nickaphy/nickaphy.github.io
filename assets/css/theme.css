@@ -1,0 +1,13 @@
+/* Theme tokens — change colors here only */
+:root {
+  --bg: #0d1117;
+  --text: #c9d1d9;
+  --accent: #3fb950;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, Consolas,
+    "DejaVu Sans Mono", monospace;
+}
