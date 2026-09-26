@@ -1,0 +1,19 @@
+<!--
+  Writeups list page. The post list below is filled by build.py from
+  content/writeups/posts/*.md (newest first).
+-->
+<h1>Writeups</h1>
+<p class="page-intro">
+  Security writeups, Project writeups, and other writeups.
+</p>
+
+<div class="writeup-filters" role="group" aria-label="Filter by tag">
+  <button type="button" class="tag-filter is-active" data-tag="">All</button>
+  {{ tag_filters }}
+</div>
+
+<p class="filter-empty" hidden>No writeups match.</p>
+
+<ul class="post-list">
+  {{ post_list }}
+</ul>

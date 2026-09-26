@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Nicklas — student aiming for SOC and cloud security. Portfolio and writeups.">
+  <title>Projects — Nicklas</title>
+  <link rel="stylesheet" href="../assets/css/theme.css">
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+  <!--
+  Shared site header.
+  ../ = relative path prefix to the site root ("" or "../").
+  {{ nav_home|projects|writeups|contact }} = optional aria-current="page".
+-->
+<header class="site-header">
+  <div class="site-header__inner">
+    <a class="site-title" href="../">nickaphy</a>
+    <nav class="site-nav" aria-label="Main">
+      <a href="../">Home</a>
+      <a href="../projects/" aria-current="page">Projects</a>
+      <a href="../writeups/">Writeups</a>
+      <a href="../#contact">Contact</a>
+    </nav>
+  </div>
+</header>
+
+  <main class="site-main">
+    <!--
+  Projects index. Built into docs/projects/index.html.
+  Card IDs match homepage “featured” deep-links.
+-->
+<h1>Projects</h1>
+<p class="page-intro">
+  Personal projects and experiments.
+</p>
+
+<ul class="card-grid">
+  <li class="card fade-in" id="passcrypt">
+    <h3>PassCrypt</h3>
+    <p>
+      PassCrypt — local, encrypted password manager built in Blazor. 
+      AES-256-GCM for encryption, Argon2id for key derivation. Single-device only for now, 
+      sync is next in the pipeline.
+    </p>
+    <ul class="tags" aria-label="Technologies">
+      <li>Csharp</li>
+      <li>Blazor</li>
+      <li>AES-256-GCM</li>
+      <li>Argon2id</li>
+    </ul>
+    <div class="card__links">
+      <a href="https://github.com/nickaphy/PassCrypt">GitHub</a>
+    </div>
+  </li>
+
+  
+  <li class="card fade in" id="GlassFM">
+    <h3>GlassFM</h3>
+    <p>
+      GlassFM - terminal based file manager written in Go.
+      Its meant as an "onramp" for learning the Linux command line,
+      and a way to get familiar with basic operations before ditching the training-wheels.
+    </p>
+    <ul class="tags" aria-label="Technologies">
+      <li>Go</li>
+      <li>Linux</li>
+    </ul>
+    <div class="card__links">
+      <a href="https://github.com/nickaphy/GlassFM">GitHub</a>
+    </div>
+  </li>
+</ul>
+
+  </main>
+  <footer class="site-footer">
+  <div class="site-footer__inner">
+    <p>&copy; Nicklas — portfolio &amp; security writeups</p>
+  </div>
+</footer>
+<script src="../assets/js/main.js"></script>
+
+</body>
+</html>

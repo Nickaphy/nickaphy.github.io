@@ -1,25 +1,52 @@
-<div class="prose">
-  <h1>Nicklas</h1>
-  <p>
-    Portfolio and security writeups. Built as a static site with plain HTML, CSS,
-    and a little JavaScript — no frameworks.
+<!--
+  Homepage source (content/home.html).
+  build.py wraps this into docs/index.html using site/templates/.
+-->
+<section class="hero">
+  <h1 class="hero__name">Nicklas</h1>
+  <p
+    id="typed-tagline"
+    class="hero__tagline"
+    data-text="Breaking box, reading logs"
+    aria-label="Breaking box, reading logs"
+  ></p>
+  <p class="hero__intro">
+    I'm a software developer studying computer science, 
+    with a growing focus on defensive security — detection and eventually cloud controls, 
+    and the messy middle between alerts and real incidents. 
+    This site collects projects I'm proud of
+    and writeups that document how I think through and solve problems.
   </p>
+</section>
 
-  <h2>Projects</h2>
-  <ul class="project-list">
-    <li>
-      <a href="https://github.com/nickaphy">GitHub</a>
-      — public repos and experiments
+<section class="section" aria-labelledby="featured-heading">
+  <div class="section__header">
+    <h2 id="featured-heading">Featured projects</h2>
+    <a class="section__more" href="{{ root }}projects/">All projects →</a>
+  </div>
+  <ul class="card-grid card-grid--3">
+    <li class="card fade-in">
+      <h3><a href="{{ root }}projects/#homelab-siem">PassCrypt</a></h3>
+      <p>
+        Local first, AES-256 encrypted, password manager.
+      </p>
+      <ul class="tags" aria-label="Technologies">
+        <li>Csharp</li>
+        <li>Blazor</li>
+        <li>AES-256-GCM</li>
+        <li>Argon2id</li>
+      </ul>
     </li>
-    <li>
-      <a href="writeups/">Writeups</a>
-      — CTF and security notes on this site
-    </li>
-  </ul>
+</section>
 
-  <h2>About</h2>
+
+<section class="contact" id="contact" aria-labelledby="contact-heading">
+  <h2 id="contact-heading">Contact</h2>
   <p>
-    This site replaces bare GitHub links as a career-facing home. Expect a
-    terminal-leaning look: dark background, monospace, one accent color.
+    Want to get in touch? Reach me at:
+    <a href="mailto:nickdahchris@gmail.com">nickdahchris@gmail.com</a>
+    or on: <a href="https://www.linkedin.com/in/nicklas-christoffersen1409/">LinkedIn</a>
+    or check out my:
+    <a href="https://github.com/nickaphy">GitHub</a>.
   </p>
-</div>
+</section>

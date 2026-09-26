@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Nicklas — student aiming for SOC and cloud security. Portfolio and writeups.">
+  <title>Vim Motions Everywhere — Nicklas</title>
+  <link rel="stylesheet" href="../assets/css/theme.css">
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+  <!--
+  Shared site header.
+  ../ = relative path prefix to the site root ("" or "../").
+  {{ nav_home|projects|writeups|contact }} = optional aria-current="page".
+-->
+<header class="site-header">
+  <div class="site-header__inner">
+    <a class="site-title" href="../">nickaphy</a>
+    <nav class="site-nav" aria-label="Main">
+      <a href="../">Home</a>
+      <a href="../projects/">Projects</a>
+      <a href="../writeups/" aria-current="page">Writeups</a>
+      <a href="../#contact">Contact</a>
+    </nav>
+  </div>
+</header>
+
+  <main class="site-main">
+    <!--
+  Individual writeup page body. build.py fills title/date/tags/body from Markdown
+  frontmatter + rendered HTML, then wraps with base/header/footer.
+  Reading column: .prose (~700px, line-height 1.7).
+-->
+<p class="back-link"><a href="../writeups/">← Back to writeups</a></p>
+
+<article class="prose">
+  <h1>Vim Motions Everywhere</h1>
+  <div class="meta">
+    <time datetime="2026-09-24">2026-09-24</time>
+    <ul class="tags" aria-label="Tags"><li>tooling</li></ul>
+  </div>
+  <p>Vim motions have been a huge part of how I work. I have them toggled on or
+installed in every environment that supports it. But there's a specific bad
+feeling that comes from landing in an app that <em>doesn't</em> — Discord, a random
+GTK dialog, a browser text field — and suddenly your fingers don't know what
+to do. That feeling sent me down a rabbit hole, and I came out the other
+side with what I'd call the actual solution, not another half-measure.</p>
+<h2>It's Not About hjkl</h2>
+<p>My first instinct was to just use arrow keys instead of fighting broken vim
+emulation everywhere. That's when I noticed the real bottleneck: it was
+never the <em>keys</em>, it was the <em>distance</em>. Reaching off the home row to hit an
+arrow key costs real time, every single press. That's the actual reason
+vim's hjkl caught on in the first place — not the modal editing, just that
+your hand never leaves home row.</p>
+<p>So the goal became: get arrow-key navigation onto the home row, without
+depending on any single app's vim plugin being any good.</p>
+<h2>Kanata</h2>
+<p><a href="https://github.com/jtroo/kanata">Kanata</a> is a free, open-source key
+remapper written in Rust. It sits between your keyboard and your operating
+system, intercepting every keypress before your OS ever sees it:</p>
+<p><code>Key press -&gt; kanata intercepts -&gt; kanata sends whatever you configured -&gt; OS</code></p>
+<p>The part that makes this actually work everywhere: kanata operates at the
+kernel's evdev/uinput level — <em>below</em> X11, Wayland, and your window manager
+entirely. It doesn't know or care whether you're in Discord, a terminal, or
+a browser field, because it's not talking to any of those. It's talking to
+the kernel, the same way your physical keyboard does. That's the difference
+between this and every app-level "vim mode" I'd tried before: those only
+work if that specific app chose to implement them well. This works
+regardless.</p>
+<h2>The Setup: Caps Lock as a Mode Switch</h2>
+<p>With a modifier key — I used Caps Lock, since nobody needs its original job
+— held down, kanata activates a second layer of key bindings. Release it,
+and you're typing normally. Hold it, and you're effectively in vim's
+"normal mode":</p>
+<table>
+<thead>
+<tr>
+<th>Key (while holding Caps)</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>h</code> <code>j</code> <code>k</code> <code>l</code></td>
+<td>Left / Down / Up / Right</td>
+</tr>
+<tr>
+<td><code>w</code></td>
+<td>Jump forward one word</td>
+</tr>
+<tr>
+<td><code>b</code></td>
+<td>Jump backward one word</td>
+</tr>
+<tr>
+<td><code>u</code></td>
+<td>Undo</td>
+</tr>
+<tr>
+<td><code>y</code></td>
+<td>Copy (acts on the current selection)</td>
+</tr>
+<tr>
+<td><code>d</code>, <code>d</code></td>
+<td>Delete the current line</td>
+</tr>
+<tr>
+<td><code>d</code>, <code>i</code>, <code>w</code></td>
+<td>Delete the word under the cursor</td>
+</tr>
+<tr>
+<td><code>v</code></td>
+<td>Toggle visual mode — <code>hjkl</code>/<code>w</code>/<code>b</code> then extend a selection instead of just moving; <code>d</code>/<code>y</code> act on it and drop back out</td>
+</tr>
+</tbody>
+</table>
+<p>None of this reimplements vim's actual text-object engine. <code>d</code>, <code>i</code>, <code>w</code>
+isn't a real "delete inner word" — it's "select the word under the cursor
+using the same Ctrl+Left / Ctrl+Shift+Right shortcut every OS text field
+already supports, then delete." It rides entirely on shortcuts apps already
+implement, rather than trying to out-build vim's parser from scratch. That
+constraint is exactly why it works in Discord and a browser field and not
+just in a real editor.</p>
+<h2>Try It</h2>
+<p>Config, install script: <strong><a href="https://github.com/Nickaphy/Kanata-OS-VimMotions">Kanata-OS-VimMotions</a></strong></p>
+</article>
+
+  </main>
+  <footer class="site-footer">
+  <div class="site-footer__inner">
+    <p>&copy; Nicklas — portfolio &amp; security writeups</p>
+  </div>
+</footer>
+<script src="../assets/js/main.js"></script>
+
+</body>
+</html>

@@ -4,3 +4,4 @@ __pycache__/
 *.egg-info/
 .Python
 .DS_Store
+AGENTS.md

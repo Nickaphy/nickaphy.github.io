@@ -1,5 +1,14 @@
 #!/usr/bin/env python3
-"""Build static HTML for the portfolio + writeups site into docs/."""
+"""
+Build static HTML into docs/ for GitHub Pages.
+
+Layout:
+  content/     — pages and writeups you edit
+  site/        — templates + assets (look & chrome)
+  docs/        — generated output (do not hand-edit)
+
+Never hand-edit docs/ — this script regenerates it.
+"""
 
 from __future__ import annotations
 
@@ -9,19 +18,20 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import markdown
-from pygments.formatters import HtmlFormatter
 
 ROOT = Path(__file__).resolve().parent
 CONTENT = ROOT / "content"
-POSTS_DIR = CONTENT / "posts"
-TEMPLATES = ROOT / "templates"
-ASSETS = ROOT / "assets"
+POSTS_DIR = CONTENT / "writeups" / "posts"
+TEMPLATES = ROOT / "site" / "templates"
+ASSETS = ROOT / "site" / "assets"
 DOCS = ROOT / "docs"
 
 FRONTMATTER_RE = re.compile(
     r"\A---\s*\n(.*?)\n---\s*\n(.*)\Z",
     re.DOTALL,
 )
+# Strip simple markdown markers for excerpts
+MD_STRIP_RE = re.compile(r"[#*_`\[\]()]")
 
 
 @dataclass
@@ -31,6 +41,7 @@ class Post:
     date: str
     tags: list[str]
     body_html: str
+    excerpt: str
 
 
 def read_template(name: str) -> str:
@@ -53,13 +64,27 @@ def parse_frontmatter(text: str) -> tuple[dict[str, str], str]:
     return meta, match.group(2).lstrip("\n")
 
 
+def make_excerpt(body_md: str, limit: int = 160) -> str:
+    """First non-empty paragraph, plain-ish text, trimmed to limit."""
+    for block in body_md.split("\n\n"):
+        line = block.strip()
+        if not line or line.startswith("```") or line.startswith("#"):
+            continue
+        plain = MD_STRIP_RE.sub("", line)
+        plain = re.sub(r"\s+", " ", plain).strip()
+        if len(plain) > limit:
+            return plain[: limit - 1].rstrip() + "…"
+        return plain
+    return ""
+
+
 def md_to_html(body: str) -> str:
     return markdown.markdown(
         body,
-        extensions=["fenced_code", "codehilite"],
+        extensions=["fenced_code", "codehilite", "tables"],
         extension_configs={
             "codehilite": {
-                "css_class": "highlight",
+                "css_class": "codehilite",
                 "guess_lang": False,
             }
         },
@@ -68,6 +93,9 @@ def md_to_html(body: str) -> str:
 
 def load_posts() -> list[Post]:
     posts: list[Post] = []
+    if not POSTS_DIR.is_dir():
+        return posts
+
     for path in sorted(POSTS_DIR.glob("*.md")):
         meta, body = parse_frontmatter(path.read_text(encoding="utf-8"))
         tags_raw = meta.get("tags", "")
@@ -79,6 +107,7 @@ def load_posts() -> list[Post]:
                 date=meta.get("date", ""),
                 tags=tags,
                 body_html=md_to_html(body),
+                excerpt=make_excerpt(body),
             )
         )
     posts.sort(key=lambda p: p.date, reverse=True)
@@ -89,27 +118,40 @@ def tags_html(tags: list[str]) -> str:
     if not tags:
         return ""
     items = "".join(f"<li>{tag}</li>" for tag in tags)
-    return f'<ul class="tags">{items}</ul>'
+    return f'<ul class="tags" aria-label="Tags">{items}</ul>'
+
+
+def nav_attrs(current: str | None) -> dict[str, str]:
+    """aria-current only on the active top-level nav item."""
+    keys = ("home", "projects", "writeups", "contact")
+    out = {f"nav_{k}": "" for k in keys}
+    if current in keys:
+        out[f"nav_{current}"] = ' aria-current="page"'
+    return out
+
+
+def render_chrome(root: str, current: str | None) -> tuple[str, str]:
+    attrs = nav_attrs(current)
+    header = read_template("header.html").replace("{{ root }}", root)
+    for key, value in attrs.items():
+        header = header.replace("{{ " + key + " }}", value)
+    footer = read_template("footer.html").replace("{{ root }}", root)
+    return header, footer
 
 
 def render_page(
     *,
     title: str,
     content: str,
-    assets_prefix: str,
-    home_href: str,
-    writeups_href: str,
+    root: str,
+    current: str | None,
 ) -> str:
-    header = (
-        read_template("header.html")
-        .replace("{{ home_href }}", home_href)
-        .replace("{{ writeups_href }}", writeups_href)
-    )
-    footer = read_template("footer.html")
+    header, footer = render_chrome(root, current)
+    content = content.replace("{{ root }}", root)
     return (
         read_template("base.html")
         .replace("{{ title }}", title)
-        .replace("{{ assets_prefix }}", assets_prefix)
+        .replace("{{ root }}", root)
         .replace("{{ header }}", header)
         .replace("{{ content }}", content)
         .replace("{{ footer }}", footer)
@@ -119,13 +161,25 @@ def render_page(
 def write_home() -> None:
     content = (CONTENT / "home.html").read_text(encoding="utf-8")
     html = render_page(
-        title="Nicklas",
+        title="Nicklas — portfolio",
         content=content,
-        assets_prefix="",
-        home_href="./",
-        writeups_href="writeups/",
+        root="",
+        current="home",
     )
     (DOCS / "index.html").write_text(html, encoding="utf-8")
+
+
+def write_projects() -> None:
+    content = (CONTENT / "projects.html").read_text(encoding="utf-8")
+    out_dir = DOCS / "projects"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    html = render_page(
+        title="Projects — Nicklas",
+        content=content,
+        root="../",
+        current="projects",
+    )
+    (out_dir / "index.html").write_text(html, encoding="utf-8")
 
 
 def write_post(post: Post) -> None:
@@ -137,41 +191,49 @@ def write_post(post: Post) -> None:
         .replace("{{ body }}", post.body_html)
     )
     html = render_page(
-        title=post.title,
+        title=f"{post.title} — Nicklas",
         content=content,
-        assets_prefix="../",
-        home_href="../",
-        writeups_href="./",
+        root="../",
+        current="writeups",
     )
-    out = DOCS / "writeups" / f"{post.slug}.html"
-    out.write_text(html, encoding="utf-8")
+    (DOCS / "writeups" / f"{post.slug}.html").write_text(html, encoding="utf-8")
 
 
 def write_writeups_index(posts: list[Post]) -> None:
     if posts:
         items = []
         for post in posts:
-            tag_bits = ", ".join(post.tags) if post.tags else ""
-            meta = post.date
-            if tag_bits:
-                meta = f"{post.date} · {tag_bits}"
-            items.append(
-                f'<li><a href="{post.slug}.html">{post.title}</a>'
-                f'<div class="meta">{meta}</div></li>'
+            tags = tags_html(post.tags)
+            excerpt = (
+                f'<p class="post-list__excerpt">{post.excerpt}</p>'
+                if post.excerpt
+                else ""
             )
-        post_list = "\n    ".join(items)
+            items.append(
+                f'<li class="post-list__item fade-in" data-tags="{" ".join(post.tags)}">'
+                f'<h2 class="post-list__title">'
+                f'<a href="{post.slug}.html">{post.title}</a></h2>'
+                f'<div class="meta"><time datetime="{post.date}">{post.date}</time></div>'
+                f"{excerpt}{tags}</li>"
+            )
+        post_list = "\n  ".join(items)
     else:
-        post_list = "<li>No writeups yet.</li>"
+        post_list = '<li class="post-list__item">No writeups yet.</li>'
 
-    content = read_template("writeups_index.html").replace(
-        "{{ post_list }}", post_list
+    all_tags = sorted({t for p in posts for t in p.tags})
+    tag_filters = "\n  ".join(
+        f'<button type="button" class="tag-filter" data-tag="{t}">{t}</button>'
+        for t in all_tags
     )
+
+    content = (CONTENT / "writeups" / "index.html").read_text(encoding="utf-8")
+    content = content.replace("{{ post_list }}", post_list)
+    content = content.replace("{{ tag_filters }}", tag_filters)
     html = render_page(
-        title="Writeups",
+        title="Writeups — Nicklas",
         content=content,
-        assets_prefix="../",
-        home_href="../",
-        writeups_href="./",
+        root="../",
+        current="writeups",
     )
     (DOCS / "writeups" / "index.html").write_text(html, encoding="utf-8")
 
@@ -181,16 +243,6 @@ def copy_assets() -> None:
     if dest.exists():
         shutil.rmtree(dest)
     shutil.copytree(ASSETS, dest)
-
-
-def write_pygments_css() -> None:
-    """Generate a dark-friendly Pygments stylesheet into assets (then copied)."""
-    css = HtmlFormatter(style="monokai").get_style_defs(".highlight")
-    out = ASSETS / "css" / "pygments.css"
-    out.write_text(
-        "/* Auto-generated by build.py — do not hand-edit */\n" + css + "\n",
-        encoding="utf-8",
-    )
 
 
 def clean_docs() -> None:
@@ -204,17 +256,16 @@ def clean_docs() -> None:
         DOCS.mkdir(parents=True)
 
     (DOCS / "writeups").mkdir(parents=True)
-    # Tell GitHub Pages not to run Jekyll on the docs/ tree
     (DOCS / ".nojekyll").write_text("", encoding="utf-8")
 
 
 def main() -> None:
-    write_pygments_css()
     clean_docs()
     copy_assets()
 
     posts = load_posts()
     write_home()
+    write_projects()
     write_writeups_index(posts)
     for post in posts:
         write_post(post)

@@ -1,0 +1,15 @@
+<!--
+  Individual writeup page body. build.py fills title/date/tags/body from Markdown
+  frontmatter + rendered HTML, then wraps with base/header/footer.
+  Reading column: .prose (~700px, line-height 1.7).
+-->
+<p class="back-link"><a href="{{ root }}writeups/">← Back to writeups</a></p>
+
+<article class="prose">
+  <h1>{{ title }}</h1>
+  <div class="meta">
+    <time datetime="{{ date }}">{{ date }}</time>
+    {{ tags_html }}
+  </div>
+  {{ body }}
+</article>

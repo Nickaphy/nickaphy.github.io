@@ -1,0 +1,48 @@
+/*
+ * theme.css — design tokens only.
+ * Change colors/spacing here; style.css should use var(--token), not raw values.
+ */
+
+:root {
+  /* Surfaces */
+  --bg: #0a0e0a;
+  --bg-elevated: #101610;
+  --bg-code: #121a12;
+
+  /* Text — soft greens, never pure white */
+  --text: #d0f0d0;
+  --text-muted: #8fb88f;
+  --heading: #eafff0;
+  --heading-bright: #f0fff5;
+
+  /* Single accent — links, borders, focus, hovers */
+  --accent: #00ff88;
+  --accent-dim: rgba(0, 255, 136, 0.35);
+  --accent-glow: rgba(0, 255, 136, 0.18);
+
+  /* Borders / focus */
+  --border: rgba(0, 255, 136, 0.28);
+  --focus-ring: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent);
+
+  /* Type */
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono",
+    monospace;
+  --lh-body: 1.6;
+  --lh-prose: 1.7;
+
+  /* Spacing scale */
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  --space-2xl: 3rem;
+
+  /* Layout */
+  --max-page: 960px;
+  --max-prose: 700px;
+  --radius: 4px;
+
+  /* Motion */
+  --ease: 180ms ease;
+}

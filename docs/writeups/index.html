@@ -3,37 +3,61 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Writeups</title>
+  <meta name="description" content="Nicklas — student aiming for SOC and cloud security. Portfolio and writeups.">
+  <title>Writeups — Nicklas</title>
   <link rel="stylesheet" href="../assets/css/theme.css">
   <link rel="stylesheet" href="../assets/css/style.css">
-  <link rel="stylesheet" href="../assets/css/pygments.css">
 </head>
 <body>
-  <header class="site-header">
+  <!--
+  Shared site header.
+  ../ = relative path prefix to the site root ("" or "../").
+  {{ nav_home|projects|writeups|contact }} = optional aria-current="page".
+-->
+<header class="site-header">
   <div class="site-header__inner">
     <a class="site-title" href="../">nickaphy</a>
     <nav class="site-nav" aria-label="Main">
       <a href="../">Home</a>
-      <a href="./">Writeups</a>
+      <a href="../projects/">Projects</a>
+      <a href="../writeups/" aria-current="page">Writeups</a>
+      <a href="../#contact">Contact</a>
     </nav>
   </div>
 </header>
 
   <main class="site-main">
-    <div class="prose">
-  <h1>Writeups</h1>
-  <p>Security notes, CTF writeups, and other long-form posts.</p>
-  <ul class="post-list">
-    <li><a href="hello-writeups.html">Hello, writeups</a><div class="meta">2026-09-23 · meta, sample</div></li>
-  </ul>
+    <!--
+  Writeups list page. The post list below is filled by build.py from
+  content/writeups/posts/*.md (newest first).
+-->
+<h1>Writeups</h1>
+<p class="page-intro">
+  Security writeups, Project writeups, and other writeups.
+</p>
+
+<div class="writeup-filters" role="group" aria-label="Filter by tag">
+  <button type="button" class="tag-filter is-active" data-tag="">All</button>
+  <button type="button" class="tag-filter" data-tag="btlo">btlo</button>
+  <button type="button" class="tag-filter" data-tag="cybersecurity">cybersecurity</button>
+  <button type="button" class="tag-filter" data-tag="networking">networking</button>
+  <button type="button" class="tag-filter" data-tag="tooling">tooling</button>
 </div>
+
+<p class="filter-empty" hidden>No writeups match.</p>
+
+<ul class="post-list">
+  <li class="post-list__item fade-in" data-tags="tooling"><h2 class="post-list__title"><a href="OS-Wide-Vim-Motions.html">Vim Motions Everywhere</a></h2><div class="meta"><time datetime="2026-09-24">2026-09-24</time></div><p class="post-list__excerpt">Vim motions have been a huge part of how I work. I have them toggled on or installed in every environment that supports it. But there's a specific bad feeling…</p><ul class="tags" aria-label="Tags"><li>tooling</li></ul></li>
+  <li class="post-list__item fade-in" data-tags="cybersecurity networking btlo"><h2 class="post-list__title"><a href="Network-Analysis-Port-Scanning.html">Port Scanning (BTLO)</a></h2><div class="meta"><time datetime="2026-09-23">2026-09-23</time></div><p class="post-list__excerpt">The SOC team received an alert in their SIEM for Local to Local port scanning where an internal private IP began scanning another internal system.</p><ul class="tags" aria-label="Tags"><li>cybersecurity</li><li>networking</li><li>btlo</li></ul></li>
+</ul>
 
   </main>
   <footer class="site-footer">
   <div class="site-footer__inner">
-    <p>&copy; Nicklas — portfolio &amp; writeups</p>
+    <p>&copy; Nicklas — portfolio &amp; security writeups</p>
   </div>
 </footer>
+<script src="../assets/js/main.js"></script>
 
 </body>
 </html>
