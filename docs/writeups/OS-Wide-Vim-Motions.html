@@ -40,90 +40,78 @@
     <time datetime="2026-09-24">2026-09-24</time>
     <ul class="tags" aria-label="Tags"><li>tooling</li></ul>
   </div>
-  <p>Vim motions have been a huge part of how I work. I have them toggled on or
-installed in every environment that supports it. But there's a specific bad
-feeling that comes from landing in an app that <em>doesn't</em> — Discord, a random
-GTK dialog, a browser text field — and suddenly your fingers don't know what
-to do. That feeling sent me down a rabbit hole, and I came out the other
-side with what I'd call the actual solution, not another half-measure.</p>
+  <p>Vim motions have been a huge part of how I work. I have them enabled or installed in every environment that supports them. But there's a specific bad feeling that comes from landing in an app that <em>doesn't</em> — Discord, a random GTK dialog, a browser text field — and suddenly your fingers don't know what to do. That feeling sent me down a rabbit hole.</p>
+<p>I came out the other side with something simpler than global Vim: a small set of text controls that works across apps without trying to recreate Vim everywhere.</p>
 <h2>It's Not About hjkl</h2>
-<p>My first instinct was to just use arrow keys instead of fighting broken vim
-emulation everywhere. That's when I noticed the real bottleneck: it was
-never the <em>keys</em>, it was the <em>distance</em>. Reaching off the home row to hit an
-arrow key costs real time, every single press. That's the actual reason
-vim's hjkl caught on in the first place — not the modal editing, just that
-your hand never leaves home row.</p>
-<p>So the goal became: get arrow-key navigation onto the home row, without
-depending on any single app's vim plugin being any good.</p>
+<p>My first instinct was to just use arrow keys instead of fighting broken Vim emulation everywhere. That's when I noticed the real bottleneck: it was never the <em>keys</em>, it was the <em>distance</em>. Reaching off the home row to hit an arrow key costs real time, every single press. That's the actual reason Vim's hjkl caught on in the first place — not the modal editing, just that your hand never leaves home row.</p>
+<p>So the goal became: get arrow-key navigation and selection onto the home row, without depending on any single app's Vim plugin being any good.</p>
 <h2>Kanata</h2>
-<p><a href="https://github.com/jtroo/kanata">Kanata</a> is a free, open-source key
-remapper written in Rust. It sits between your keyboard and your operating
-system, intercepting every keypress before your OS ever sees it:</p>
-<p><code>Key press -&gt; kanata intercepts -&gt; kanata sends whatever you configured -&gt; OS</code></p>
-<p>The part that makes this actually work everywhere: kanata operates at the
-kernel's evdev/uinput level — <em>below</em> X11, Wayland, and your window manager
-entirely. It doesn't know or care whether you're in Discord, a terminal, or
-a browser field, because it's not talking to any of those. It's talking to
-the kernel, the same way your physical keyboard does. That's the difference
-between this and every app-level "vim mode" I'd tried before: those only
-work if that specific app chose to implement them well. This works
-regardless.</p>
-<h2>The Setup: Caps Lock as a Mode Switch</h2>
-<p>With a modifier key — I used Caps Lock, since nobody needs its original job
-— held down, kanata activates a second layer of key bindings. Release it,
-and you're typing normally. Hold it, and you're effectively in vim's
-"normal mode":</p>
+<p><a href="https://github.com/jtroo/kanata">Kanata</a> is a free, open-source key remapper written in Rust. It intercepts keypresses and sends the keys or shortcuts you configure:</p>
+<p><code>Key press -&gt; kanata intercepts -&gt; kanata sends the configured shortcut -&gt; OS</code></p>
+<p>On my Linux setup, Kanata reads keyboard events and emits keypresses through the kernel's input system. That means the same bindings work across apps, whether I'm in Discord, a terminal, or a browser field. Text actions still depend on the app supporting the ordinary operating-system shortcut being sent, but they don't rely on that app implementing Vim motions.</p>
+<h2>The Setup: Caps Lock as a Held Modifier</h2>
+<p>I use Caps Lock as a modifier. While I hold it, Kanata activates a layer of text controls. When I release it, typing returns to normal. The layer isn't meant to be Vim's normal mode; it just puts common movement and selection shortcuts under my left hand.</p>
 <table>
 <thead>
 <tr>
-<th>Key (while holding Caps)</th>
+<th>Key while holding Caps</th>
 <th>Action</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td><code>h</code> <code>j</code> <code>k</code> <code>l</code></td>
-<td>Left / Down / Up / Right</td>
+<td>Move left / down / up / right</td>
 </tr>
 <tr>
-<td><code>w</code></td>
-<td>Jump forward one word</td>
+<td><code>w</code> / <code>b</code></td>
+<td>Jump forward / backward by a word</td>
 </tr>
 <tr>
-<td><code>b</code></td>
-<td>Jump backward one word</td>
+<td><code>n</code> / <code>m</code></td>
+<td>Select the current word, then extend the selection backward / forward with repeated presses</td>
 </tr>
 <tr>
-<td><code>u</code></td>
-<td>Undo</td>
+<td><code>e</code></td>
+<td>Select the current line</td>
 </tr>
 <tr>
-<td><code>y</code></td>
-<td>Copy (acts on the current selection)</td>
+<td><code>o</code></td>
+<td>Move to the end of the line and insert a line break below</td>
 </tr>
 <tr>
-<td><code>d</code>, <code>d</code></td>
-<td>Delete the current line</td>
+<td><code>0</code> / <code>Shift+4</code> (<code>$</code>)</td>
+<td>Move to the start / end of the line</td>
 </tr>
 <tr>
-<td><code>d</code>, <code>i</code>, <code>w</code></td>
-<td>Delete the word under the cursor</td>
-</tr>
-<tr>
-<td><code>v</code></td>
-<td>Toggle visual mode — <code>hjkl</code>/<code>w</code>/<code>b</code> then extend a selection instead of just moving; <code>d</code>/<code>y</code> act on it and drop back out</td>
+<td><code>u</code> / <code>p</code> / <code>del</code></td>
+<td>Undo / paste / delete</td>
 </tr>
 </tbody>
 </table>
-<p>None of this reimplements vim's actual text-object engine. <code>d</code>, <code>i</code>, <code>w</code>
-isn't a real "delete inner word" — it's "select the word under the cursor
-using the same Ctrl+Left / Ctrl+Shift+Right shortcut every OS text field
-already supports, then delete." It rides entirely on shortcuts apps already
-implement, rather than trying to out-build vim's parser from scratch. That
-constraint is exactly why it works in Discord and a browser field and not
-just in a real editor.</p>
+<p>For larger selections, I hold <strong>Caps+V</strong> and use:</p>
+<table>
+<thead>
+<tr>
+<th>Keys while holding Caps+V</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>h</code> <code>j</code> <code>k</code> <code>l</code></td>
+<td>Extend the selection left / down / up / right</td>
+</tr>
+<tr>
+<td><code>w</code> / <code>b</code></td>
+<td>Extend the selection forward / backward by a word</td>
+</tr>
+</tbody>
+</table>
+<p>Release <strong>V</strong> to return to the regular Caps layer. This lets me make larger selections without changing how the usual word-selection keys work.</p>
+<p>The word and line actions use ordinary OS shortcuts. For example, word movement sends Ctrl+Left or Ctrl+Right on Linux, while word selection adds Shift. Kanata isn't reimplementing Vim's text-object engine; it sends shortcuts that apps already understand.</p>
 <h2>Try It</h2>
-<p>Config, install script: <strong><a href="https://github.com/Nickaphy/Kanata-OS-VimMotions">Kanata-OS-VimMotions</a></strong></p>
+<p>The config and install script are in <a href="https://github.com/Nickaphy/Kanata-OS-VimMotions">Kanata-OS-VimMotions</a>.</p>
 </article>
 
   </main>
