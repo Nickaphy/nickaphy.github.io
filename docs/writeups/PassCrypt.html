@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Nicklas — student aiming for SOC and cloud security. Portfolio and writeups.">
+  <title>PassCrypt — Nicklas</title>
+  <link rel="stylesheet" href="../assets/css/theme.css">
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+  <!--
+  Shared site header.
+  ../ = relative path prefix to the site root ("" or "../").
+  {{ nav_home|projects|writeups|contact }} = optional aria-current="page".
+-->
+<header class="site-header">
+  <div class="site-header__inner">
+    <a class="site-title" href="../">nickaphy</a>
+    <nav class="site-nav" aria-label="Main">
+      <a href="../">Home</a>
+      <a href="../projects/">Projects</a>
+      <a href="../writeups/" aria-current="page">Writeups</a>
+      <a href="../#contact">Contact</a>
+    </nav>
+  </div>
+</header>
+
+  <main class="site-main">
+    <!--
+  Individual writeup page body. build.py fills title/date/tags/body from Markdown
+  frontmatter + rendered HTML, then wraps with base/header/footer.
+  Reading column: .prose (~700px, line-height 1.7).
+-->
+<p class="back-link"><a href="../writeups/">← Back to writeups</a></p>
+
+<article class="prose">
+  <h1>PassCrypt</h1>
+  <div class="meta">
+    <time datetime="2026-10-19">2026-10-19</time>
+    <ul class="tags" aria-label="Tags"><li>projects</li><li>security</li></ul>
+  </div>
+  <h1>PassCrypt</h1>
+<p>PassCrypt is a password manager I built with C# and Blazor. I wanted a project that brought together my interests in programming, cybersecurity, open source, and privacy.
+I designed it to keep its vault on the user’s machine, without a PassCrypt account or built-in cloud sync. That keeps the project simple, but it also means there’s no password recovery if you forget your master password.
+The vault is encrypted with AES-256-GCM. PassCrypt derives the encryption key from the master password using Argon2id. I store the Argon2id settings with the vault so they can be adjusted later without changing the code and potentially locking out existing vaults.</p>
+<h2>Clean Architecture</h2>
+<p>I also tried using Clean Architecture. It helped me separate the interface, application logic, and storage, but it added overhead to a personal project. I spent time organizing code that could have gone toward improving the app. It was a useful lesson: an architecture can be well structured and still be more than a project needs.</p>
+<h2>Takeaway</h2>
+<p>The main takeaway for me was that an architecture can be useful to learn, even when it’s more than a project needs. I understand the benefits of Clean Architecture, but on a project this size, following it too strictly meant spending more time maintaining structure than building useful features. In future personal projects, I’d use those ideas selectively and keep the design proportional to the problem.</p>
+</article>
+
+  </main>
+  <footer class="site-footer">
+  <div class="site-footer__inner">
+    <p>&copy; Nicklas — portfolio &amp; security writeups</p>
+  </div>
+</footer>
+<script src="../assets/js/main.js"></script>
+
+</body>
+</html>
